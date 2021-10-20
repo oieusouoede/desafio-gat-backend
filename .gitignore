@@ -34,6 +34,5 @@ build/
 
 ### Outras coisas
 
-*.pdf
 tokens
 credentials.json
