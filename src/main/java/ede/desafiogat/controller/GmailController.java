@@ -1,8 +1,11 @@
 package ede.desafiogat.controller;
 
+import com.mashape.unirest.http.exceptions.UnirestException;
 import ede.desafiogat.gmail.service.GmailService;
 import ede.desafiogat.models.Email;
+import ede.desafiogat.trello.service.TrelloService;
 import lombok.AllArgsConstructor;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -18,14 +21,21 @@ import java.util.List;
 public class GmailController {
 
     private GmailService gmailService;
+    private TrelloService trelloService;
 
     @GetMapping("/getmails")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void GetMails () throws IOException, GeneralSecurityException {
+    public void getMails() throws IOException, GeneralSecurityException {
 
         List<Email> emails = gmailService.processMessages();
-        for (Email email : emails){
+        for (Email email : emails) {
             System.out.println(email);
         }
+    }
+
+    @GetMapping("/trello")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void trello() throws IOException, ParseException, UnirestException {
+        trelloService.getTrelloAccess();
     }
 }

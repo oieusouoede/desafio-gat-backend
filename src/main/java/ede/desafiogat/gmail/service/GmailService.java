@@ -52,7 +52,6 @@ public class GmailService {
     }
 
     // Processar os emails
-
     public List <Email> processMessages() throws IOException, GeneralSecurityException {
         List <Email> emailObjects = new ArrayList<>();
         String user = "me";
@@ -141,8 +140,6 @@ public class GmailService {
         }
         return messagesSnippets;
     }
-
-
 
     // Busca as credenciais
     private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
