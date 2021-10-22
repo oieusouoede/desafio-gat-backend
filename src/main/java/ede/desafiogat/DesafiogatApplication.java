@@ -1,5 +1,6 @@
 package ede.desafiogat;
 
+import org.json.simple.parser.JSONParser;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
@@ -17,5 +18,8 @@ public class DesafiogatApplication extends SpringBootServletInitializer {
 	public RestTemplate restTemplate() {
 		return new RestTemplate();
 	}
+
+	@Bean
+	public JSONParser jsonParser(){return new JSONParser();}
 
 }
