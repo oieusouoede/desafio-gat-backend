@@ -13,10 +13,7 @@ import com.google.api.client.repackaged.org.apache.commons.codec.binary.Base64;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
-import com.google.api.services.gmail.model.ListMessagesResponse;
-import com.google.api.services.gmail.model.Message;
-import com.google.api.services.gmail.model.MessagePart;
-import com.google.api.services.gmail.model.MessagePartHeader;
+import com.google.api.services.gmail.model.*;
 import ede.desafiogat.models.Email;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,8 +49,7 @@ public class GmailService {
     }
 
     // Processar os emails
-
-    public List <Email> processMessages() throws IOException, GeneralSecurityException {
+    public List <Email> getTrelloMail() throws IOException, GeneralSecurityException {
         List <Email> emailObjects = new ArrayList<>();
         String user = "me";
         // pegar id, sender, subject, content e date
@@ -141,8 +137,6 @@ public class GmailService {
         }
         return messagesSnippets;
     }
-
-
 
     // Busca as credenciais
     private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
