@@ -89,7 +89,7 @@ public class TrelloService {
                 "di mim que vai caçá sua turmis! Mauris nec dolor in eros commodo tempor. Aenean aliquam " +
                 "molestie leo, vitae iaculis nisl.";
 
-        HttpResponse<JsonNode> response = Unirest.post("https://api.trello.com/1/cards")
+        HttpResponse<JsonNode> response = Unirest.post(BASE_URL+CARDS_ENDPOINT)
                 .header("Accept", "application/json")
                 .queryString("name", titulo)
                 .queryString("desc", descricao)
@@ -100,46 +100,6 @@ public class TrelloService {
 
         System.out.println(response.getBody());
 
-
     }
 
-
-
-
-
-
-
-
-// Se eu conseguir autenticar via api
-
-//  String url = "https://trello.com/1/authorize?expiration=1day&name=Desafio+GAT&return_url=https://localhost:8080/callback&callback_method=postMessage&scope=read,write&&response_type=token&key=" + trelloKey;
-
-//  triggerPopup(url);
-
-//    private void triggerPopup(String url) {
-//
-//        System.out.println("Attempting to reach: " + url);
-//
-//        String systemOS = System.getProperty("os.name").toLowerCase();
-//
-//        try {
-//            if(Desktop.isDesktopSupported()) {
-//                Desktop desktop = Desktop.getDesktop();
-//                desktop.browse(new URI(url));
-//            } else {
-//                Runtime runtime = Runtime.getRuntime();
-//                if(systemOS.contains("mac")) {
-//                    runtime.exec("open " + url);
-//                }
-//                else if(systemOS.contains("nix") || systemOS.contains("nux")) {
-//                    runtime.exec("xdg-open " + url);
-//                }
-//                else
-//                    System.out.println("I couldn't launch a browser in your OS :( #SadFace");
-//            }
-//        }
-//        catch(IOException | URISyntaxException e) {
-//            System.out.println("Error: "+ e.getMessage());
-//        }
-//    }
 }

@@ -27,7 +27,7 @@ public class GmailController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void getMails() throws IOException, GeneralSecurityException {
 
-        List<Email> emails = gmailService.processMessages();
+        List<Email> emails = gmailService.getTrelloMail();
         for (Email email : emails) {
             System.out.println(email);
         }
