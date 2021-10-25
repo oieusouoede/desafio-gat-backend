@@ -17,23 +17,21 @@ import java.security.GeneralSecurityException;
 @RestController
 @RequestMapping("/")
 @AllArgsConstructor(onConstructor = @__(@Autowired))
-public class GmailController {
+public class GATController {
 
-    private MailCardService service;
-    private TrelloService trelloService;
     private LogService log;
 
-    // Isso aqui ta fazendo o papel de inicializar tudo
-    @GetMapping("/init")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public void getInit() throws IOException, GeneralSecurityException, UnirestException, ParseException {
-        service.initializeStuff();
-    }
+    //Implementar outros endpoints
 
+    // Mantenho esse?
     @GetMapping("/getall")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void getMailList() {
-        log.printAllMail();
+        System.out.println("Nada a fazer");
     }
+
+    // Get Logs
+
+    // Get cards (?)
 
 }

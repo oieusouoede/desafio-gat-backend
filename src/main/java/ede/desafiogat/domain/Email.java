@@ -1,4 +1,4 @@
-package ede.desafiogat.models;
+package ede.desafiogat.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -24,7 +24,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 @Service
 @AllArgsConstructor(onConstructor = @__(@Autowired))
@@ -36,81 +39,27 @@ public class GmailService {
     private static final List<String> SCOPES = Collections.singletonList(GmailScopes.GMAIL_LABELS);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
 
-    // Obtém os emails contendo "Trello" e retorna um a de EmailDTO
-    public List<EmailDTO> getMail (String lastCheck, String filterParam) throws IOException, GeneralSecurityException {
+    public List<EmailDTO> getMail (String query) throws IOException, GeneralSecurityException {
         List<EmailDTO> emailDTOList = new ArrayList<>();
         String user = "me";
-        String timespan = lastCheck == null ? "" : "after:"+lastCheck;
-        String query = timespan + " " + filterParam;
-        System.out.println("#### Querying gmail with: " +query);
 
-        List<Message> messageSnippets = getMessagesSnippets(query, user); // Recebe a lista com os Snippets
+        List<Message> messageSnippets = getMessagesSnippets(query, user);
         for (Message message : messageSnippets){
 
-            // Agora é preciso pedir as mensagens completas
             message = getGmailService().users().messages().get(user,message.getId()).setFormat("FULL").execute();
-
-            String messageId = message.getId();                 // Id do email
-            Date date = new Date(message.getInternalDate());    // Data do email
+            String messageId = message.getId();
+            Date date = new Date(message.getInternalDate());
 
             MessagePart messagePart = message.getPayload();
-            String sender = getFromHeader("From", messagePart);         // Remetente
-            String subject = getFromHeader("Subject", messagePart);     // Assunto
-            String content = getContent(message);                           // Conteúdo do email
+            String sender = getFromHeader("From", messagePart);
+            String subject = getFromHeader("Subject", messagePart);
+            String content = getContent(message);
 
             emailDTOList.add(new EmailDTO(messageId, sender, subject, content, date));
         }
-
         return emailDTOList;
     }
 
-    // Obtém uma informação específica do Header
-    private String getFromHeader(String field, MessagePart messagePart) {
-        String fieldValue = "";
-        if (messagePart != null){
-            List <MessagePartHeader> headers = messagePart.getHeaders();
-            for (MessagePartHeader header : headers){
-                if (header.getName().equals(field)){
-                    fieldValue = header.getValue().trim();
-                    break;
-                }
-            }
-        }
-        return fieldValue;
-    }
-
-    // Obtém o conteúdo do email e decodifica
-    private String getContent(Message message) {
-        StringBuilder stringBuilder = new StringBuilder();
-        try {
-            getPlainTextFromMessageParts(message.getPayload().getParts(), stringBuilder);
-            if (stringBuilder.length() == 0) {
-                stringBuilder.append(message.getPayload().getBody().getData());
-            }
-            byte[] bodyBytes = Base64.decodeBase64(stringBuilder.toString());
-            String text = new String(bodyBytes, "UTF-8");
-            return text;
-        } catch (UnsupportedEncodingException e) {
-            System.out.println("UnsupportedEncoding: " + e.toString());
-            return message.getSnippet();
-        }
-    }
-
-    // Busca o conteúdo do email
-    private void getPlainTextFromMessageParts(List<MessagePart> messageParts, StringBuilder stringBuilder) {
-        if (messageParts != null) {
-            for (MessagePart messagePart : messageParts) {
-                if (messagePart.getMimeType().equals("text/plain")) {
-                    stringBuilder.append(messagePart.getBody().getData());
-                }
-                if (messagePart.getParts() != null) {
-                    getPlainTextFromMessageParts(messagePart.getParts(), stringBuilder);
-                }
-            }
-        }
-    }
-
-    // Busca todas as mensagens e retorna os Snippets
     private List<Message> getMessagesSnippets(String query, String user) throws IOException, GeneralSecurityException{
         List messagesSnippets = new ArrayList();
         Gmail service = getGmailService();
@@ -134,7 +83,57 @@ public class GmailService {
         return messagesSnippets;
     }
 
-    // Busca as credenciais
+    private String getFromHeader(String field, MessagePart messagePart) {
+        String fieldValue = "";
+        if (messagePart != null){
+            List <MessagePartHeader> headers = messagePart.getHeaders();
+            for (MessagePartHeader header : headers){
+                if (header.getName().equals(field)){
+                    fieldValue = header.getValue().trim();
+                    break;
+                }
+            }
+        }
+        return fieldValue;
+    }
+
+    private String getContent(Message message) {
+        StringBuilder stringBuilder = new StringBuilder();
+        try {
+            getPlainTextFromMessageParts(message.getPayload().getParts(), stringBuilder);
+            if (stringBuilder.length() == 0) {
+                stringBuilder.append(message.getPayload().getBody().getData());
+            }
+            byte[] bodyBytes = Base64.decodeBase64(stringBuilder.toString());
+            String text = new String(bodyBytes, "UTF-8");
+            return text;
+        } catch (UnsupportedEncodingException e) {
+            System.out.println("UnsupportedEncoding: " + e.toString());
+            return message.getSnippet();
+        }
+    }
+
+    private void getPlainTextFromMessageParts(List<MessagePart> messageParts, StringBuilder stringBuilder) {
+        if (messageParts != null) {
+            for (MessagePart messagePart : messageParts) {
+                if (messagePart.getMimeType().equals("text/plain")) {
+                    stringBuilder.append(messagePart.getBody().getData());
+                }
+                if (messagePart.getParts() != null) {
+                    getPlainTextFromMessageParts(messagePart.getParts(), stringBuilder);
+                }
+            }
+        }
+    }
+
+    private Gmail getGmailService() throws IOException, GeneralSecurityException {
+        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+        return service;
+    }
+
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
 
         InputStream in = GmailService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
@@ -150,15 +149,5 @@ public class GmailService {
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
-    }
-
-    // Efetua conexão com o Gmail
-    private Gmail getGmailService() throws IOException, GeneralSecurityException {
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
-                .setApplicationName(APPLICATION_NAME)
-                .build();
-
-        return service;
     }
 }
