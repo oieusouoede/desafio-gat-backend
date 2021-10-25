@@ -1,104 +1,131 @@
 package ede.desafiogat.trello.service;
 
 import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import ede.desafiogat.trello.dto.BoardDTO;
+import ede.desafiogat.trello.dto.CardDTO;
+import ede.desafiogat.trello.dto.ListDTO;
+import ede.desafiogat.trello.dto.UserDTO;
 import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 @Service
+@Data
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class TrelloService {
 
     private static final String TRELLO_CREDENTIALS_PATH = "/trello-credentials.json";
-
     private static final String BASE_URL = "https://api.trello.com/";
-    public static final String BOARDS_ENDPOINT = "1/boards/";
-    public static final String LISTS_ENDPOINT = "1/lists/";
-    public static final String CARDS_ENDPOINT = "1/cards/";
-
-    @Autowired
-    private final RestTemplate restTemplate;
+    private static String API_KEY;
+    private static String USER_TOKEN;
 
     private JSONParser parser;
 
-    public void getTrelloAccess() throws IOException, ParseException, UnirestException {
+    public UserDTO getTrelloAccess() {
+
+        UserDTO user = null;
+
+        try {
+            InputStream is = TrelloService.class.getResourceAsStream(TRELLO_CREDENTIALS_PATH);
+
+            Object obj = parser.parse(new InputStreamReader(is));
+            JSONObject jsonCredentials = (JSONObject) obj;
 
 
-        InputStream is = TrelloService.class.getResourceAsStream(TRELLO_CREDENTIALS_PATH);
+            API_KEY = (String) jsonCredentials.get("api_key");
+            USER_TOKEN = (String) jsonCredentials.get("user_token");
 
-        Object obj = parser.parse(new InputStreamReader(is));
-        JSONObject jsonCredentials = (JSONObject) obj;
+            HttpClient httpClient = HttpClients.custom()
+                    .disableCookieManagement()
+                    .build();
+            Unirest.setHttpClient(httpClient);
 
-        String API_KEY = (String) jsonCredentials.get("api_key");
-        String USER_TOKEN = (String) jsonCredentials.get("user_token");
+            HttpResponse<String> response = Unirest.get(BASE_URL + "1/members/me/")
+                    .queryString("key", API_KEY)
+                    .queryString("token", USER_TOKEN)
+                    .asString();
 
-        String boardName = "OH BOY";
+            Object res = parser.parse(response.getBody());
+            JSONObject jsonresp = (JSONObject) res;
+            String userId = (String) jsonresp.get("id");
+            String userFullName = (String) jsonresp.get("fullName");
+            String username = (String) jsonresp.get("username");
 
-        createBoard(API_KEY, USER_TOKEN, boardName);
+            user = new UserDTO(userId, userFullName, username);
+
+
+        } catch (IOException | ParseException | UnirestException e){
+            System.out.println("Quebrou no get trello access: "+ e.getMessage());
+        }
+
+        return user;
 
     }
 
-    public void createBoard(String KEY, String TOKEN, String name) throws UnirestException, ParseException {
-        HttpResponse<String> response = Unirest.post(BASE_URL+BOARDS_ENDPOINT)
+    public BoardDTO createBoard(String name) throws UnirestException, ParseException {
+        HttpResponse<String> response = Unirest.post(BASE_URL + "1/boards/")
                 .queryString("name", name)
                 .queryString("defaultLists", "false")
-                .queryString("key", KEY)
-                .queryString("token", TOKEN)
+                .queryString("key", API_KEY)
+                .queryString("token", USER_TOKEN)
                 .asString();
 
         Object res = parser.parse(response.getBody());
         JSONObject jsonresp = (JSONObject) res;
         String boardID = (String) jsonresp.get("id");
-        createList(KEY, TOKEN, boardID);
+        String boardName = (String) jsonresp.get("name");
 
+        return new BoardDTO(boardID, boardName);
     }
 
-    public void createList (String KEY, String TOKEN, String boardID) throws UnirestException, ParseException {
-        HttpResponse<String> response = Unirest.post(BASE_URL+LISTS_ENDPOINT)
-                .queryString("name", "Emails recebidos")
+    public ListDTO createList (String listName, String boardID) throws UnirestException, ParseException {
+        HttpResponse<String> response = Unirest.post(BASE_URL + "1/lists/")
+                .queryString("name", listName)
                 .queryString("idBoard", boardID)
-                .queryString("key", KEY)
-                .queryString("token", TOKEN)
+                .queryString("key", API_KEY)
+                .queryString("token", USER_TOKEN)
                 .asString();
-
-        System.out.println(response.getBody());
 
         Object res = parser.parse(response.getBody());
         JSONObject jsonresp = (JSONObject) res;
-
-        // Daqui eu consigo pegar os detalhes da lista
         String mailListID = (String) jsonresp.get("id");
-        createCard(KEY, TOKEN, mailListID);
+        String mailListName = (String) jsonresp.get("name");
+
+        return new ListDTO(mailListID, mailListName);
 
     }
 
-    public void createCard (String KEY, String TOKEN, String listID) throws UnirestException, ParseException {
-        String titulo = "Assunto do email";
-        String descricao = "Mussum Ipsum, cacilds vidis litro abertis. Si u mundo tá muito paradis? " +
-                "Toma um mé que o mundo vai girarzis! Quem manda na minha terra sou euzis! Quem num gosta " +
-                "di mim que vai caçá sua turmis! Mauris nec dolor in eros commodo tempor. Aenean aliquam " +
-                "molestie leo, vitae iaculis nisl.";
+    public CardDTO createCard (String listId, String mailId, String mailSubject, String mailContent) throws UnirestException, ParseException {
 
-        HttpResponse<JsonNode> response = Unirest.post(BASE_URL+CARDS_ENDPOINT)
+        HttpResponse<String> response = Unirest.post(BASE_URL + "1/cards/")
                 .header("Accept", "application/json")
-                .queryString("name", titulo)
-                .queryString("desc", descricao)
-                .queryString("idList", listID)
-                .queryString("key", KEY)
-                .queryString("token", TOKEN)
-                .asJson();
+                .queryString("name", mailSubject)
+                .queryString("desc", mailContent)
+                .queryString("idList", listId)
+                .queryString("key", API_KEY)
+                .queryString("token", USER_TOKEN)
+                .asString();
 
-        System.out.println(response.getBody());
+        Object res = parser.parse(response.getBody());
+        JSONObject jsonresp = (JSONObject) res;
+        String cardId = (String) jsonresp.get("id");
+        String cardTitle = (String) jsonresp.get("name");
+
+
+        return new CardDTO(cardId, cardTitle, mailId, listId);
+
 
     }
 
