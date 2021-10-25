@@ -27,7 +27,6 @@ public class MailCardService {
     private LogService logService;
     private static String QUERY_PARAM = "trello";
 
-
     public void initializeStuff () throws GeneralSecurityException, IOException, UnirestException, ParseException {
 
         // Inicialização
