@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.OneToOne;
 import java.util.Date;
 
 @Entity
@@ -18,18 +19,21 @@ import java.util.Date;
 public class Email {
 
     @Id
-    private String id;
+    private String emailId;
 
     @Column
-    private String sender;
+    private String emailSender;
 
     @Column
-    private String subject;
+    private String emailSubject;
 
     @Column
-    private String message;
+    private String emailMessage;
 
     @Column
-    private Date messageDate;
+    private Date emailDate;
+
+    @OneToOne
+    private Log log;
 
 }

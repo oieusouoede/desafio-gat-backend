@@ -33,6 +33,9 @@ public class TrelloService {
 
     private JSONParser parser;
 
+    // Link pra obter o token
+    // https://trello.com/1/authorize?expiration=30days&name=GAT+API&scope=read,write&response_type=token&key=806a81615df0426dbe3e72d8561c5b19
+
     public UserDTO getTrelloAccess() {
 
         UserDTO user = null;
