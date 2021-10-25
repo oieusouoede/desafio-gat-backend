@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -23,26 +22,19 @@ public class LogService {
 
     // Salva nos registros (db)
     public void registerNewMail(List<EmailDTO> newMail) {
-
-        Long now = Instant.now().getEpochSecond();
-
-        LocalDateTime moment = LocalDateTime.ofInstant(Instant.ofEpochSecond(now), ZoneId.systemDefault());
-
-        System.out.println("\n" + moment + " -- " + newMail.size() + " Novos emails encontrados");
+        System.out.println("\n" + LocalDateTime.now() + " -- " + newMail.size() + " Novos emails encontrados");
         receivedMail.addAll(newMail);
+        saveLastCheck();
+    }
 
+    // Salva a data da última consulta
+    private void saveLastCheck (){
+        Long now = Instant.now().getEpochSecond();
         logs.add(Long.toString(now));
     }
 
-    public void printAllMail(){
-        System.out.println("\n######   Esses são todos os emails encontrados:");
-        receivedMail.stream().forEach(System.out::println);
-    }
-
     public void initializeLog () {
-        Long now = Instant.now().getEpochSecond();
-        LocalDateTime moment = LocalDateTime.ofInstant(Instant.ofEpochSecond(now), ZoneId.systemDefault());
-        System.out.println("\n" + moment + " -- Inicializando registro");
+        System.out.println("\n" + LocalDateTime.now() + " -- Inicializando registro");
         logs.add(null);
     }
 
@@ -51,20 +43,15 @@ public class LogService {
     }
 
     public void registerNewBoard (BoardDTO board) {
-        Long now = Instant.now().getEpochSecond();
-        LocalDateTime moment = LocalDateTime.ofInstant(Instant.ofEpochSecond(now), ZoneId.systemDefault());
-        System.out.println("\n" + moment + " -- Board criada no Trello: " + board);
+        System.out.println("\n" + LocalDateTime.now() + " -- Board criada no Trello: " + board);
     }
+
     public void registerNewList (ListDTO list) {
-        Long now = Instant.now().getEpochSecond();
-        LocalDateTime moment = LocalDateTime.ofInstant(Instant.ofEpochSecond(now), ZoneId.systemDefault());
-        System.out.println("\n" + moment + " -- Lista criada no Trello: " + list);
+        System.out.println("\n" + LocalDateTime.now() + " -- Lista criada no Trello: " + list);
     }
 
     public void registerLogin(UserDTO authenticatedUser) {
-        Long now = Instant.now().getEpochSecond();
-        LocalDateTime moment = LocalDateTime.ofInstant(Instant.ofEpochSecond(now), ZoneId.systemDefault());
-        System.out.println("\n" + moment + " -- Autenticado com sucesso na Trello API:");
+        System.out.println("\n" + LocalDateTime.now() + " -- Autenticado com sucesso na Trello API:\n");
         System.out.println("ID do usuário: " + authenticatedUser.getUserId());
         System.out.println("Nome do usuário: " + authenticatedUser.getFullName());
         System.out.println("Username: " + authenticatedUser.getUserName());
@@ -73,10 +60,8 @@ public class LogService {
 
     public void registerNewCards(List<CardDTO> cards) {
         createdCards.addAll(cards);
-        Long now = Instant.now().getEpochSecond();
-        LocalDateTime moment = LocalDateTime.ofInstant(Instant.ofEpochSecond(now), ZoneId.systemDefault());
-        System.out.println("\n" + moment + " -- " + cards.size() + " cards criados no Trello:");
-        cards.stream().forEach(System.out::println);
-
+        System.out.println("\n" + LocalDateTime.now() + " -- " + cards.size() + " cards criados no Trello");
+        cards.forEach(System.out::println);
     }
+
 }

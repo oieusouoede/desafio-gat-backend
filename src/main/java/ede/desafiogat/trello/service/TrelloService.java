@@ -40,9 +40,7 @@ public class TrelloService {
         try {
             InputStream is = TrelloService.class.getResourceAsStream(TRELLO_CREDENTIALS_PATH);
 
-            Object obj = parser.parse(new InputStreamReader(is));
-            JSONObject jsonCredentials = (JSONObject) obj;
-
+            JSONObject jsonCredentials = (JSONObject) parser.parse(new InputStreamReader(is));
 
             API_KEY = (String) jsonCredentials.get("api_key");
             USER_TOKEN = (String) jsonCredentials.get("user_token");
@@ -57,24 +55,21 @@ public class TrelloService {
                     .queryString("token", USER_TOKEN)
                     .asString();
 
-            Object res = parser.parse(response.getBody());
-            JSONObject jsonresp = (JSONObject) res;
+            JSONObject jsonresp = (JSONObject) parser.parse(response.getBody());
             String userId = (String) jsonresp.get("id");
             String userFullName = (String) jsonresp.get("fullName");
             String username = (String) jsonresp.get("username");
 
             user = new UserDTO(userId, userFullName, username);
 
-
         } catch (IOException | ParseException | UnirestException e){
             System.out.println("Quebrou no get trello access: "+ e.getMessage());
         }
-
         return user;
-
     }
 
     public BoardDTO createBoard(String name) throws UnirestException, ParseException {
+
         HttpResponse<String> response = Unirest.post(BASE_URL + "1/boards/")
                 .queryString("name", name)
                 .queryString("defaultLists", "false")
@@ -82,8 +77,7 @@ public class TrelloService {
                 .queryString("token", USER_TOKEN)
                 .asString();
 
-        Object res = parser.parse(response.getBody());
-        JSONObject jsonresp = (JSONObject) res;
+        JSONObject jsonresp = (JSONObject) parser.parse(response.getBody());
         String boardID = (String) jsonresp.get("id");
         String boardName = (String) jsonresp.get("name");
 
@@ -98,13 +92,11 @@ public class TrelloService {
                 .queryString("token", USER_TOKEN)
                 .asString();
 
-        Object res = parser.parse(response.getBody());
-        JSONObject jsonresp = (JSONObject) res;
+        JSONObject jsonresp = (JSONObject) parser.parse(response.getBody());
         String mailListID = (String) jsonresp.get("id");
         String mailListName = (String) jsonresp.get("name");
 
         return new ListDTO(mailListID, mailListName);
-
     }
 
     public CardDTO createCard (String listId, String mailId, String mailSubject, String mailContent) throws UnirestException, ParseException {
@@ -118,15 +110,10 @@ public class TrelloService {
                 .queryString("token", USER_TOKEN)
                 .asString();
 
-        Object res = parser.parse(response.getBody());
-        JSONObject jsonresp = (JSONObject) res;
+        JSONObject jsonresp = (JSONObject) parser.parse(response.getBody());
         String cardId = (String) jsonresp.get("id");
         String cardTitle = (String) jsonresp.get("name");
 
-
         return new CardDTO(cardId, cardTitle, mailId, listId);
-
-
     }
-
 }
