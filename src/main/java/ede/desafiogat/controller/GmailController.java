@@ -1,8 +1,8 @@
 package ede.desafiogat.controller;
 
 import com.mashape.unirest.http.exceptions.UnirestException;
-import ede.desafiogat.gmail.service.GmailService;
-import ede.desafiogat.models.Email;
+import ede.desafiogat.service.LogService;
+import ede.desafiogat.service.MailCardService;
 import ede.desafiogat.trello.service.TrelloService;
 import lombok.AllArgsConstructor;
 import org.json.simple.parser.ParseException;
@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.List;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
@@ -20,22 +19,21 @@ import java.util.List;
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class GmailController {
 
-    private GmailService gmailService;
+    private MailCardService service;
     private TrelloService trelloService;
+    private LogService log;
 
-    @GetMapping("/getmails")
+    // Isso aqui ta fazendo o papel de inicializar tudo
+    @GetMapping("/init")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void getMails() throws IOException, GeneralSecurityException {
-
-        List<Email> emails = gmailService.getTrelloMail();
-        for (Email email : emails) {
-            System.out.println(email);
-        }
+    public void getInit() throws IOException, GeneralSecurityException, UnirestException, ParseException {
+        service.initializeStuff();
     }
 
-    @GetMapping("/trello")
+    @GetMapping("/getall")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void trello() throws IOException, ParseException, UnirestException {
-        trelloService.getTrelloAccess();
+    public void getMailList() {
+        log.printAllMail();
     }
+
 }

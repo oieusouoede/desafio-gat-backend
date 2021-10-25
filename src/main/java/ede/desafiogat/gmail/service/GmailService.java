@@ -13,20 +13,18 @@ import com.google.api.client.repackaged.org.apache.commons.codec.binary.Base64;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
-import com.google.api.services.gmail.model.*;
-import ede.desafiogat.models.Email;
+import com.google.api.services.gmail.model.ListMessagesResponse;
+import com.google.api.services.gmail.model.Message;
+import com.google.api.services.gmail.model.MessagePart;
+import com.google.api.services.gmail.model.MessagePartHeader;
+import ede.desafiogat.gmail.dto.EmailDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
-
-import java.util.ArrayList;
-import java.util.Collections;
-
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 @AllArgsConstructor(onConstructor = @__(@Autowired))
@@ -38,37 +36,35 @@ public class GmailService {
     private static final List<String> SCOPES = Collections.singletonList(GmailScopes.GMAIL_LABELS);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
 
-    // Disponibiliza o serviço do gmail
-    public static Gmail getGmailService() throws IOException, GeneralSecurityException {
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
-                .setApplicationName(APPLICATION_NAME)
-                .build();
-
-        return service;
-    }
-
-    // Processar os emails
-    public List <Email> getTrelloMail() throws IOException, GeneralSecurityException {
-        List <Email> emailObjects = new ArrayList<>();
+    // Obtém os emails contendo "Trello" e retorna um a de EmailDTO
+    public List<EmailDTO> getMail (String lastCheck, String filterParam) throws IOException, GeneralSecurityException {
+        List<EmailDTO> emailDTOList = new ArrayList<>();
         String user = "me";
-        // pegar id, sender, subject, content e date
-        List<Message> messageSnippets = getMessagesSnippets();
+        String timespan = lastCheck == null ? "" : "after:"+lastCheck;
+        String query = timespan + " " + filterParam;
+        System.out.println("#### Querying gmail with: " +query);
+
+        List<Message> messageSnippets = getMessagesSnippets(query, user); // Recebe a lista com os Snippets
         for (Message message : messageSnippets){
+
+            // Agora é preciso pedir as mensagens completas
             message = getGmailService().users().messages().get(user,message.getId()).setFormat("FULL").execute();
-            String messageId = message.getId();
+
+            String messageId = message.getId();                 // Id do email
+            Date date = new Date(message.getInternalDate());    // Data do email
+
             MessagePart messagePart = message.getPayload();
+            String sender = getFromHeader("From", messagePart);         // Remetente
+            String subject = getFromHeader("Subject", messagePart);     // Assunto
+            String content = getContent(message);                           // Conteúdo do email
 
-            String sender = getFromHeader("From", messagePart);
-            String subject = getFromHeader("Subject", messagePart);
-            String content = getContent(message);
-            Date date = new Date(message.getInternalDate());
-
-            emailObjects.add(new Email(messageId, sender, subject, content, date));
+            emailDTOList.add(new EmailDTO(messageId, sender, subject, content, date));
         }
-        return emailObjects;
+
+        return emailDTOList;
     }
 
+    // Obtém uma informação específica do Header
     private String getFromHeader(String field, MessagePart messagePart) {
         String fieldValue = "";
         if (messagePart != null){
@@ -83,6 +79,7 @@ public class GmailService {
         return fieldValue;
     }
 
+    // Obtém o conteúdo do email e decodifica
     private String getContent(Message message) {
         StringBuilder stringBuilder = new StringBuilder();
         try {
@@ -99,6 +96,7 @@ public class GmailService {
         }
     }
 
+    // Busca o conteúdo do email
     private void getPlainTextFromMessageParts(List<MessagePart> messageParts, StringBuilder stringBuilder) {
         if (messageParts != null) {
             for (MessagePart messagePart : messageParts) {
@@ -112,12 +110,10 @@ public class GmailService {
         }
     }
 
-    // Buscar todas as mensagens
-    private List<Message> getMessagesSnippets() throws IOException, GeneralSecurityException{
+    // Busca todas as mensagens e retorna os Snippets
+    private List<Message> getMessagesSnippets(String query, String user) throws IOException, GeneralSecurityException{
         List messagesSnippets = new ArrayList();
         Gmail service = getGmailService();
-        String user = "me";
-        String query = "trello";
 
         ListMessagesResponse response = service
                 .users()
@@ -139,7 +135,7 @@ public class GmailService {
     }
 
     // Busca as credenciais
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+    private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
 
         InputStream in = GmailService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
@@ -156,4 +152,13 @@ public class GmailService {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
+    // Efetua conexão com o Gmail
+    private Gmail getGmailService() throws IOException, GeneralSecurityException {
+        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+
+        return service;
+    }
 }
