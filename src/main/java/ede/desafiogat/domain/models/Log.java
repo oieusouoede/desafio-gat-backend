@@ -7,29 +7,29 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Entity
+@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Log {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long logId;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private Long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "cardId", referencedColumnName = "cardId")
+    @OneToOne
     private Card card;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "emailId", referencedColumnName = "emailId")
+    @OneToOne
     private Email email;
 
     @Column
     private String logMessage;
 
     @Column
-    private Date logDate;
+    private Long logDate;
 
 }

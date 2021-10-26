@@ -3,6 +3,7 @@ package ede.desafiogat.trello.service;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import ede.desafiogat.domain.models.BoardList;
 import ede.desafiogat.trello.dto.BoardDTO;
 import ede.desafiogat.trello.dto.CardDTO;
 import ede.desafiogat.trello.dto.BoardListDTO;
@@ -84,24 +85,28 @@ public class TrelloService {
 
         String boardID = (String) boardJson.get("id");
         String boardName = (String) boardJson.get("name");
-        List<BoardListDTO> boardLists = new ArrayList<>();
 
-        return new BoardDTO(boardID, boardName, boardLists);
+        return new BoardDTO(boardID, boardName);
     }
 
-    public BoardListDTO returnListDTO(String listName, BoardDTO boardDTO) throws UnirestException, ParseException {
+    public BoardListDTO returnListDTO(String listName, BoardDTO boardDTO) throws UnirestException {
 
-        JSONObject listJson = checkIfListExists(listName, boardDTO.getBoardId());
+        BoardListDTO boardList = null;
 
-        if (listJson == null){
-            listJson = createList(listName, boardDTO.getBoardId());
+        try {
+            JSONObject listJson = checkIfListExists(listName, boardDTO.getBoardId());
+            if (listJson == null) {
+                listJson = createList(listName, boardDTO.getBoardId());
+            }
+
+            String mailListID = (String) listJson.get("id");
+            String mailListName = (String) listJson.get("name");
+            boardList = new BoardListDTO(mailListID, mailListName, boardDTO);
+        } catch (ParseException e){
+            System.out.println("Quebrou tentando retornar a lista");
         }
 
-        String mailListID = (String) listJson.get("id");
-        String mailListName = (String) listJson.get("name");
-        List<CardDTO> listCards = new ArrayList<>();
-
-        return new BoardListDTO(mailListID, mailListName, boardDTO, listCards);
+        return boardList;
     }
 
     private JSONObject checkIfBoardExists() throws UnirestException, ParseException {
@@ -136,26 +141,30 @@ public class TrelloService {
         return (JSONObject) parser.parse(response.getBody());
     }
 
-    private JSONObject checkIfListExists(String listName, String boardId) throws UnirestException, ParseException {
-        HttpResponse<String> response = Unirest.get(BASE_URL + "1/boards/"+boardId+"/lists")
-                .queryString("key", API_KEY)
-                .queryString("token", USER_TOKEN)
-                .asString();
-
-        JSONArray listsFound = (JSONArray) parser.parse(response.getBody());
-
+    private JSONObject checkIfListExists(String listName, String boardId) throws UnirestException {
         JSONObject foundList = null;
+        try {
+            HttpResponse<String> response = Unirest.get(BASE_URL + "1/boards/" + boardId + "/lists")
+                    .queryString("key", API_KEY)
+                    .queryString("token", USER_TOKEN)
+                    .asString();
 
-        if (listsFound.isEmpty()){
-            foundList = null;
-        } else {
-            for (int i = 0; i < listsFound.size(); i++) {
-                JSONObject obj = (JSONObject) listsFound.get(i);
-                String objListName = (String) obj.get("name");
-                if (objListName.equals(listName)){
-                    foundList = obj;
+            JSONArray listsFound = (JSONArray) parser.parse(response.getBody());
+
+            if (listsFound.isEmpty()) {
+                foundList = null;
+            } else {
+                for (int i = 0; i < listsFound.size(); i++) {
+                    JSONObject obj = (JSONObject) listsFound.get(i);
+                    String objListName = (String) obj.get("name");
+                    if (objListName.equals(listName)) {
+                        foundList = obj;
+                    }
                 }
             }
+
+        } catch (ParseException e){
+            System.out.println("Prse exceptions no checkIfListExists()");
         }
         return foundList;
     }
@@ -171,22 +180,22 @@ public class TrelloService {
         return (JSONObject) parser.parse(response.getBody());
     }
 
-//    public CardDTO createCard (String listId, String mailId, String mailSubject, String mailContent) throws UnirestException, ParseException {
-//
-//        HttpResponse<String> response = Unirest.post(BASE_URL + "1/cards/")
-//                .header("Accept", "application/json")
-//                .queryString("name", mailSubject)
-//                .queryString("desc", mailContent)
-//                .queryString("idList", listId)
-//                .queryString("key", API_KEY)
-//                .queryString("token", USER_TOKEN)
-//                .asString();
-//
-//        JSONObject jsonresp = (JSONObject) parser.parse(response.getBody());
-//        String cardId = (String) jsonresp.get("id");
-//        String cardTitle = (String) jsonresp.get("name");
-//
-//        return new CardDTO(cardId, cardTitle, mailId, listId);
-//    }
+    public CardDTO createCard (BoardListDTO list, String mailSubject, String mailContent) throws UnirestException, ParseException {
+
+        HttpResponse<String> response = Unirest.post(BASE_URL + "1/cards/")
+                .header("Accept", "application/json")
+                .queryString("name", mailSubject)
+                .queryString("desc", mailContent)
+                .queryString("idList", list.getListId())
+                .queryString("key", API_KEY)
+                .queryString("token", USER_TOKEN)
+                .asString();
+
+        JSONObject jsonresp = (JSONObject) parser.parse(response.getBody());
+        String cardId = (String) jsonresp.get("id");
+        String cardTitle = (String) jsonresp.get("name");
+
+        return new CardDTO(cardId, list, cardTitle, mailContent);
+    }
 
 }

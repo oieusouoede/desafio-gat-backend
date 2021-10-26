@@ -5,19 +5,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 import java.util.Date;
 
 @Entity
+@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Email {
 
     @Id
+    @Column(nullable = false)
     private String emailId;
 
     @Column
@@ -26,13 +25,11 @@ public class Email {
     @Column
     private String emailSubject;
 
+    @Lob
     @Column
     private String emailMessage;
 
     @Column
     private Date emailDate;
-
-    @OneToOne
-    private Log log;
 
 }

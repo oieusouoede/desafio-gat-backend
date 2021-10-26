@@ -13,14 +13,9 @@ import java.util.Date;
 @NoArgsConstructor
 public class EmailDTO {
 
-    private String id;
-
-    private String sender;
-
-    private String subject;
-
-    private String message;
-
-    private Date messageDate;
-
+    private String emailId;
+    private String emailSender;
+    private String emailSubject;
+    private String emailMessage;
+    private Date emailDate;
 }
