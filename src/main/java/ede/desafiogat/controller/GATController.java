@@ -20,13 +20,14 @@ import java.security.GeneralSecurityException;
 public class GATController {
 
     private LogService log;
+    private MailCardService service;
 
     //Implementar outros endpoints
 
     // Mantenho esse?
-    @GetMapping("/getall")
+    @GetMapping("/board")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void getMailList() {
+    public void getBoard() {
         System.out.println("Nada a fazer");
     }
 

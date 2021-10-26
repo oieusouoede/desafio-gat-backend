@@ -1,4 +1,4 @@
-package ede.desafiogat.domain;
+package ede.desafiogat.domain.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Data
@@ -15,14 +16,15 @@ import javax.persistence.*;
 public class Board {
 
     @Id
+    @Column(nullable = false)
     private String boardId;
 
     @Column
     private String boardName;
 
-    @OneToMany(mappedBy = "board", fetch = FetchType.LAZY,
+    @OneToMany(mappedBy = "board", fetch = FetchType.EAGER,
             cascade = CascadeType.ALL)
-    private java.util.List<List> boardLists;
+    private List<BoardList> boardLists;
 
 
 }
