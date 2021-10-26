@@ -1,14 +1,12 @@
-package ede.desafiogat.domain;
+package ede.desafiogat.domain.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
 @Entity
-@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -22,11 +20,12 @@ public class Card {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "listId")
-    private List list;
+    private BoardList list;
 
     @Column
     private String cardName;
 
-    @Column String cardDesc;
+    @Column
+    private String cardDesc;
 
 }

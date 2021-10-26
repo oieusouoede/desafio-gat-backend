@@ -5,7 +5,7 @@ import ede.desafiogat.gmail.dto.EmailDTO;
 import ede.desafiogat.gmail.service.GmailService;
 import ede.desafiogat.trello.dto.BoardDTO;
 import ede.desafiogat.trello.dto.CardDTO;
-import ede.desafiogat.trello.dto.ListDTO;
+import ede.desafiogat.trello.dto.BoardListDTO;
 import ede.desafiogat.trello.dto.UserDTO;
 import ede.desafiogat.trello.service.TrelloService;
 import lombok.AllArgsConstructor;
@@ -27,7 +27,9 @@ public class MailCardService {
     private TrelloService trello;
     private LogService logService;
     private static final String QUERY_PARAM = "trello";
-    private static String MAIL_LIST_ID;
+    private static String UNREAD_MAIL_LIST_ID;
+    private static String READ_MAIL_LIST_ID;
+
 
     public void initialization() throws GeneralSecurityException, IOException, UnirestException, ParseException {
 
@@ -35,14 +37,15 @@ public class MailCardService {
         UserDTO authenticatedUser = trello.getTrelloAccess();
         logService.registerLogin(authenticatedUser);
 
-        // Nessa parte eu vou precisar verificar se já tem um board no database
-        BoardDTO newBoard = trello.createBoard("GAT");
-        logService.registerNewBoard(newBoard);
-        ListDTO newTrelloList = trello.createList("Emails recebidos", newBoard.getBoardId());
-        MAIL_LIST_ID = newTrelloList.getListId();
-        logService.registerNewList(newTrelloList);
+        BoardDTO boardDTO = trello.returnBoardDTO("GAT");
+        logService.registerBoard(boardDTO);
 
-        // Primeira varredura da caixa de entrada
+        BoardListDTO unreadListDTO = trello.returnListDTO("Emails não lidos", boardDTO);
+        UNREAD_MAIL_LIST_ID = logService.registerList(unreadListDTO);
+
+        BoardListDTO readListDTO = trello.returnListDTO("Emails lidos", boardDTO);
+        READ_MAIL_LIST_ID = logService.registerList(readListDTO);
+
         getTrelloRelatedMail();
     }
 
@@ -50,27 +53,27 @@ public class MailCardService {
 
         List<EmailDTO> emails = gmail.getMail(buildQuery());
         logService.registerNewMail(emails);
-        List<CardDTO> cards = getMailCreateCard(MAIL_LIST_ID, emails);
-        logService.registerNewCards(cards);
+       // List<CardDTO> cards = getMailCreateCard(MAIL_LIST_ID, emails);
+       // logService.registerNewCards(cards);
     }
 
-    private List<CardDTO> getMailCreateCard (String listId, List<EmailDTO> mailList) throws UnirestException, ParseException {
-
-        List<CardDTO> createdCards = new ArrayList<>();
-        for (EmailDTO mail : mailList){
-            String content = new StringBuilder()
-                    .append("Remetente: ")
-                    .append(mail.getSender())
-                    .append("\nData: ")
-                    .append(mail.getMessageDate())
-                    .append("\nConteúdo: \n")
-                    .append(mail.getMessage())
-                    .toString();
-
-            createdCards.add(trello.createCard(listId, mail.getId(), mail.getSubject(), content));
-        }
-        return createdCards;
-    }
+//    private List<CardDTO> getMailCreateCard (String listId, List<EmailDTO> mailList) throws UnirestException, ParseException {
+//
+//        List<CardDTO> createdCards = new ArrayList<>();
+//        for (EmailDTO mail : mailList){
+//            String content = new StringBuilder()
+//                    .append("Remetente: ")
+//                    .append(mail.getSender())
+//                    .append("\nData: ")
+//                    .append(mail.getMessageDate())
+//                    .append("\nConteúdo: \n")
+//                    .append(mail.getMessage())
+//                    .toString();
+//
+//            createdCards.add(trello.createCard(listId, mail.getId(), mail.getSubject(), content));
+//        }
+//        return createdCards;
+//    }
 
     private String buildQuery(){
 

@@ -1,4 +1,4 @@
-package ede.desafiogat.domain;
+package ede.desafiogat.domain.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +12,6 @@ import javax.persistence.OneToOne;
 import java.util.Date;
 
 @Entity
-@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
