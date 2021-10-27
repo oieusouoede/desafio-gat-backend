@@ -6,8 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.util.Date;
-import java.util.List;
 
 @Entity
 @Data
@@ -20,10 +18,12 @@ public class Log {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @OneToOne
+    @OneToOne(cascade=CascadeType.ALL)
+    @JoinColumn(name = "cardId")
     private Card card;
 
-    @OneToOne
+    @OneToOne(cascade=CascadeType.MERGE)
+    @JoinColumn(name = "emailId")
     private Email email;
 
     @Column

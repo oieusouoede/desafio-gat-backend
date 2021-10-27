@@ -1,6 +1,5 @@
 package ede.desafiogat.trello.dto;
 
-import ede.desafiogat.domain.models.BoardList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

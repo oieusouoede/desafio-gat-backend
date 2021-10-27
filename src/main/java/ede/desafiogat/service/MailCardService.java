@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Transactional
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class MailCardService {
 
@@ -33,7 +35,6 @@ public class MailCardService {
     private static BoardListDTO MAIL_LIST;
     private static BoardListDTO READ_MAIL_LIST_ID;
 
-
     public void initialization() throws GeneralSecurityException, IOException, UnirestException, ParseException {
 
         UserDTO authenticatedUser = trello.getTrelloAccess();
@@ -43,12 +44,14 @@ public class MailCardService {
         logService.registerBoard(boardDTO);
 
         BoardListDTO unreadListDTO = trello.returnListDTO("Emails não lidos", boardDTO);
-        logService.registerList(unreadListDTO);
+        //logService.registerList(unreadListDTO);
         MAIL_LIST = unreadListDTO;
 
         BoardListDTO readListDTO = trello.returnListDTO("Emails lidos", boardDTO);
         logService.registerList(readListDTO);
         READ_MAIL_LIST_ID = readListDTO;
+
+
 
         getTrelloRelatedMail();
     }
@@ -62,7 +65,6 @@ public class MailCardService {
             if (emailDTOList.isEmpty()) {
                 System.out.println("\n" + LocalDateTime.now() + " -- Nenhum novo email encontrado. Nada a fazer.");
             } else {
-                logService.registerMail(emailDTOList);
                 getMailCreateCard(emailDTOList, newLogDate);
             }
         } catch (UnirestException e){
@@ -75,7 +77,6 @@ public class MailCardService {
 
     private void getMailCreateCard (List<EmailDTO> emailDTOList, Long newLogDate) throws UnirestException, ParseException {
 
-        List<LogDTO> logDTOList = new ArrayList<>();
         for (EmailDTO emailDTO : emailDTOList){
             String content = new StringBuilder()
                     .append("Remetente: ")
@@ -88,8 +89,12 @@ public class MailCardService {
 
             CardDTO cardDTO = trello.createCard(MAIL_LIST, emailDTO.getEmailSubject(), content);
 
-            logService.registerCard(cardDTO);
+
+
+
             logService.createLogDTO(newLogDate, emailDTO, cardDTO);
+
+
         }
         System.out.println("\n" + LocalDateTime.now() + " -- " + emailDTOList.size() + " cards(s) criados(s)");
     }

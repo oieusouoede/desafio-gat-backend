@@ -85,8 +85,9 @@ public class TrelloService {
 
         String boardID = (String) boardJson.get("id");
         String boardName = (String) boardJson.get("name");
+        List<BoardListDTO> lists = new ArrayList<>();
 
-        return new BoardDTO(boardID, boardName);
+        return new BoardDTO(boardID, boardName, lists);
     }
 
     public BoardListDTO returnListDTO(String listName, BoardDTO boardDTO) throws UnirestException {
@@ -101,7 +102,8 @@ public class TrelloService {
 
             String mailListID = (String) listJson.get("id");
             String mailListName = (String) listJson.get("name");
-            boardList = new BoardListDTO(mailListID, mailListName, boardDTO);
+            List<CardDTO> cards = new ArrayList<>();
+            boardList = new BoardListDTO(mailListID, mailListName, boardDTO, cards);
         } catch (ParseException e){
             System.out.println("Quebrou tentando retornar a lista");
         }

@@ -12,6 +12,7 @@ import ede.desafiogat.trello.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -49,17 +50,16 @@ public class LogService {
         System.out.println("\n" + LocalDateTime.now() + " -- Lista criada no Trello: " + createdList);
     }
 
-    public void registerMail(List<EmailDTO> emailDTOList) {
-        for (EmailDTO emailDTO : emailDTOList) {
-            Email email = emailMapper.toModel(emailDTO);
-            emailRepository.save(email);
-        }
-        System.out.println("\n" + LocalDateTime.now() + " -- " + emailDTOList.size() + " email(s) salvo(s)");
+    public EmailDTO registerMail(EmailDTO emailDTO) {
+        Email email = emailMapper.toModel(emailDTO);
+        Email createdEmail = emailRepository.save(email);
+        return emailMapper.toDTO(createdEmail);
     }
 
-    public void registerCard(CardDTO cardDTO) {
+    public CardDTO registerCard(CardDTO cardDTO) {
         Card newCard = cardMapper.toModel(cardDTO);
-        cardRepository.save(newCard);
+        Card createdCard = cardRepository.save(newCard);
+        return cardMapper.toDTO(createdCard);
     }
 
     public Long getLastCheck () {
@@ -79,6 +79,10 @@ public class LogService {
     }
 
     public void createLogDTO (Long logDate, EmailDTO emailDTO, CardDTO cardDTO){
+
+        //
+
+
         LocalDateTime readableDate = Instant.ofEpochSecond(logDate)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
@@ -94,6 +98,8 @@ public class LogService {
         LogDTO newLogDTO = new LogDTO(cardDTO, emailDTO, logMessage, logDate);
         Log newLog = logMapper.toModel(newLogDTO);
         logRepository.save(newLog);
+        //EmailDTO createdEmailDTO = registerMail(emailDTO);
+        //CardDTO createdCardDTO = registerCard(cardDTO);
     }
 
 }

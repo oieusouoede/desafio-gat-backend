@@ -4,8 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Data
@@ -21,6 +23,12 @@ public class BoardList {
     @Column
     private String listName;
 
-    @ManyToOne(cascade = CascadeType.ALL, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "boardId")
     private Board board;
+
+
+    @OneToMany(mappedBy = "list", fetch = FetchType.LAZY,
+    cascade = CascadeType.ALL)
+    private List<Card> cards;
 }

@@ -22,4 +22,9 @@ public class Board {
     @Column
     private String boardName;
 
+    @OneToMany(mappedBy = "board", fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL)
+    private List<BoardList> boardLists;
+
+
 }

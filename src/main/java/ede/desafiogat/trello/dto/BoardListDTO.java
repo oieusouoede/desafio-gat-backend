@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -14,4 +16,6 @@ public class BoardListDTO {
     private String listId;
     private String listName;
     private BoardDTO board;
+    private List<CardDTO> cards;
+
 }

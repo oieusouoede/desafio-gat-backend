@@ -15,4 +15,5 @@ public class BoardDTO {
 
     private String boardId;
     private String boardName;
+    private List<BoardListDTO> boardLists;
 }
