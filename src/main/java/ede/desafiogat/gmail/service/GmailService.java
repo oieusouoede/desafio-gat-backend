@@ -37,18 +37,18 @@ public class GmailService {
     private static final String APPLICATION_NAME = "Desafio-GAT";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
-    private static final List<String> SCOPES = Collections.singletonList(GmailScopes.GMAIL_LABELS);
+    private static final List<String> SCOPES = Collections.singletonList(GmailScopes.GMAIL_READONLY);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
 
-    public List<EmailDTO> getMail (Long lastLogDate, String queryParam) throws IOException, GeneralSecurityException {
+    public List<EmailDTO> getMail (Long lastLogDate, String queryParam, Gmail gmail) throws IOException, GeneralSecurityException {
         List<EmailDTO> emailDTOList = new ArrayList<>();
         String user = "me";
         String query = buildQuery(lastLogDate, queryParam);
 
-        List<Message> messageSnippets = getMessagesSnippets(query, user);
+        List<Message> messageSnippets = getMessagesSnippets(query, user, gmail);
         for (Message message : messageSnippets){
 
-            message = getGmailService().users().messages().get(user,message.getId()).setFormat("FULL").execute();
+            message = gmail.users().messages().get(user,message.getId()).setFormat("FULL").execute();
             String messageId = message.getId();
             Date date = new Date(message.getInternalDate());
 
@@ -70,11 +70,10 @@ public class GmailService {
         return query;
     }
 
-    private List<Message> getMessagesSnippets(String query, String user) throws IOException, GeneralSecurityException{
+    private List<Message> getMessagesSnippets(String query, String user, Gmail gmail) throws IOException, GeneralSecurityException{
         List messagesSnippets = new ArrayList();
-        Gmail service = getGmailService();
 
-        ListMessagesResponse response = service
+        ListMessagesResponse response = gmail
                 .users()
                 .messages()
                 .list(user)
@@ -85,7 +84,7 @@ public class GmailService {
             messagesSnippets.addAll(response.getMessages());
             if (response.getNextPageToken() != null) {
                 String pageToken = response.getNextPageToken();
-                response = service.users().messages().list(user).setQ(query).setPageToken(pageToken).execute();
+                response = gmail.users().messages().list(user).setQ(query).setPageToken(pageToken).execute();
             } else {
                 break;
             }
@@ -136,7 +135,7 @@ public class GmailService {
         }
     }
 
-    private Gmail getGmailService() throws IOException, GeneralSecurityException {
+    public Gmail getGmailService() throws IOException, GeneralSecurityException {
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)

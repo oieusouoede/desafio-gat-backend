@@ -1,5 +1,6 @@
 package ede.desafiogat.service;
 
+import com.google.api.services.gmail.Gmail;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import ede.desafiogat.gmail.dto.EmailDTO;
 import ede.desafiogat.gmail.service.GmailService;
@@ -25,7 +26,7 @@ import java.util.List;
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class MailCardService {
 
-    private GmailService gmail;
+    private GmailService gmailService;
     private TrelloService trello;
     private LogService logService;
     private static final String QUERY_PARAM = "trello";
@@ -33,9 +34,11 @@ public class MailCardService {
     private static BoardListDTO MAIL_LIST;
     private static BoardListDTO READ_MAIL_LIST_ID;
 
+    private static Gmail GMAIL;
 
     public void initialization() throws GeneralSecurityException, IOException, UnirestException, ParseException {
 
+        GMAIL = gmailService.getGmailService();
         UserDTO authenticatedUser = trello.getTrelloAccess();
         logService.registerLogin(authenticatedUser);
 
@@ -50,7 +53,6 @@ public class MailCardService {
         logService.registerList(readListDTO);
         READ_MAIL_LIST_ID = readListDTO;
 
-        getTrelloRelatedMail();
     }
 
     public void getTrelloRelatedMail() throws GeneralSecurityException, IOException {
@@ -58,7 +60,7 @@ public class MailCardService {
         try {
             Long lastLogDate = logService.getLastCheck();
             Long newLogDate = Instant.now().getEpochSecond();
-            List<EmailDTO> emailDTOList = gmail.getMail(lastLogDate, QUERY_PARAM);
+            List<EmailDTO> emailDTOList = gmailService.getMail(lastLogDate, QUERY_PARAM, GMAIL);
             if (emailDTOList.isEmpty()) {
                 System.out.println("\n" + LocalDateTime.now() + " -- Nenhum novo email encontrado. Nada a fazer.");
             } else {

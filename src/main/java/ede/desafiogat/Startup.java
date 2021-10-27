@@ -25,7 +25,7 @@ public class Startup {
 
     }
 
-    @Scheduled(fixedRate = 15000, initialDelay = 20000)
+    @Scheduled(fixedRate = 15000, initialDelay = 30000)
     public void verifyMailbox () throws GeneralSecurityException, UnirestException, IOException, ParseException {
 
         service.getTrelloRelatedMail();
