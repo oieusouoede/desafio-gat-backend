@@ -3,6 +3,7 @@ package ede.desafiogat.service;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import ede.desafiogat.gmail.dto.EmailDTO;
 import ede.desafiogat.gmail.service.GmailService;
+import ede.desafiogat.service.dto.LogDTO;
 import ede.desafiogat.trello.dto.BoardDTO;
 import ede.desafiogat.trello.dto.CardDTO;
 import ede.desafiogat.trello.dto.BoardListDTO;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,13 +29,13 @@ public class MailCardService {
     private TrelloService trello;
     private LogService logService;
     private static final String QUERY_PARAM = "trello";
-    private static String UNREAD_MAIL_LIST_ID;
-    private static String READ_MAIL_LIST_ID;
+
+    private static BoardListDTO MAIL_LIST;
+    private static BoardListDTO READ_MAIL_LIST_ID;
 
 
     public void initialization() throws GeneralSecurityException, IOException, UnirestException, ParseException {
 
-        logService.initializeLog();
         UserDTO authenticatedUser = trello.getTrelloAccess();
         logService.registerLogin(authenticatedUser);
 
@@ -41,47 +43,54 @@ public class MailCardService {
         logService.registerBoard(boardDTO);
 
         BoardListDTO unreadListDTO = trello.returnListDTO("Emails não lidos", boardDTO);
-        UNREAD_MAIL_LIST_ID = logService.registerList(unreadListDTO);
+        logService.registerList(unreadListDTO);
+        MAIL_LIST = unreadListDTO;
 
         BoardListDTO readListDTO = trello.returnListDTO("Emails lidos", boardDTO);
-        READ_MAIL_LIST_ID = logService.registerList(readListDTO);
+        logService.registerList(readListDTO);
+        READ_MAIL_LIST_ID = readListDTO;
 
         getTrelloRelatedMail();
     }
 
-    public void getTrelloRelatedMail() throws GeneralSecurityException, IOException, UnirestException, ParseException {
+    public void getTrelloRelatedMail() throws GeneralSecurityException, IOException {
 
-        List<EmailDTO> emails = gmail.getMail(buildQuery());
-        logService.registerNewMail(emails);
-       // List<CardDTO> cards = getMailCreateCard(MAIL_LIST_ID, emails);
-       // logService.registerNewCards(cards);
+        try {
+            Long lastLogDate = logService.getLastCheck();
+            Long newLogDate = Instant.now().getEpochSecond();
+            List<EmailDTO> emailDTOList = gmail.getMail(lastLogDate, QUERY_PARAM);
+            if (emailDTOList.isEmpty()) {
+                System.out.println("\n" + LocalDateTime.now() + " -- Nenhum novo email encontrado. Nada a fazer.");
+            } else {
+                logService.registerMail(emailDTOList);
+                getMailCreateCard(emailDTOList, newLogDate);
+            }
+        } catch (UnirestException e){
+            System.out.println("Peguei unirest exception");
+        } catch (ParseException e) {
+            System.out.println("Peguei parse exception");
+        }
+
     }
 
-//    private List<CardDTO> getMailCreateCard (String listId, List<EmailDTO> mailList) throws UnirestException, ParseException {
-//
-//        List<CardDTO> createdCards = new ArrayList<>();
-//        for (EmailDTO mail : mailList){
-//            String content = new StringBuilder()
-//                    .append("Remetente: ")
-//                    .append(mail.getSender())
-//                    .append("\nData: ")
-//                    .append(mail.getMessageDate())
-//                    .append("\nConteúdo: \n")
-//                    .append(mail.getMessage())
-//                    .toString();
-//
-//            createdCards.add(trello.createCard(listId, mail.getId(), mail.getSubject(), content));
-//        }
-//        return createdCards;
-//    }
+    private void getMailCreateCard (List<EmailDTO> emailDTOList, Long newLogDate) throws UnirestException, ParseException {
 
-    private String buildQuery(){
+        List<LogDTO> logDTOList = new ArrayList<>();
+        for (EmailDTO emailDTO : emailDTOList){
+            String content = new StringBuilder()
+                    .append("Remetente: ")
+                    .append(emailDTO.getEmailSender())
+                    .append("\nData: ")
+                    .append(emailDTO.getEmailDate())
+                    .append("\nConteúdo: \n")
+                    .append(emailDTO.getEmailMessage())
+                    .toString();
 
-        String lastCheck = logService.getLastCheck();
-        String timespan = lastCheck == null ? "" : "after:"+lastCheck;
-        String query = timespan + " " + QUERY_PARAM;
-        System.out.println("\n" + LocalDateTime.now() + " -- Fazendo nova consulta no Gmail usando a query: " + query);
-        return query;
+            CardDTO cardDTO = trello.createCard(MAIL_LIST, emailDTO.getEmailSubject(), content);
+
+            logService.registerCard(cardDTO);
+            logService.createLogDTO(newLogDate, emailDTO, cardDTO);
+        }
+        System.out.println("\n" + LocalDateTime.now() + " -- " + emailDTOList.size() + " cards(s) criados(s)");
     }
-
 }

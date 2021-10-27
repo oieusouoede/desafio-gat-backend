@@ -14,6 +14,4 @@ public class BoardListDTO {
     private String listId;
     private String listName;
     private BoardDTO board;
-    private java.util.List<CardDTO> cards;
-
 }

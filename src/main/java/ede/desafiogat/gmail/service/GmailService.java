@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -39,9 +40,10 @@ public class GmailService {
     private static final List<String> SCOPES = Collections.singletonList(GmailScopes.GMAIL_LABELS);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
 
-    public List<EmailDTO> getMail (String query) throws IOException, GeneralSecurityException {
+    public List<EmailDTO> getMail (Long lastLogDate, String queryParam) throws IOException, GeneralSecurityException {
         List<EmailDTO> emailDTOList = new ArrayList<>();
         String user = "me";
+        String query = buildQuery(lastLogDate, queryParam);
 
         List<Message> messageSnippets = getMessagesSnippets(query, user);
         for (Message message : messageSnippets){
@@ -55,9 +57,17 @@ public class GmailService {
             String subject = getFromHeader("Subject", messagePart);
             String content = getContent(message);
 
+
             emailDTOList.add(new EmailDTO(messageId, sender, subject, content, date));
         }
         return emailDTOList;
+    }
+
+    private String buildQuery(Long lastCheck, String queryParam){
+        String timespan = lastCheck == null ? "" : "after:"+lastCheck;
+        String query = timespan + " " + queryParam;
+        System.out.println("\n" + LocalDateTime.now() + " -- Fazendo nova consulta no Gmail usando a query: " + query);
+        return query;
     }
 
     private List<Message> getMessagesSnippets(String query, String user) throws IOException, GeneralSecurityException{
